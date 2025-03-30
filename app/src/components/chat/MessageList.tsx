@@ -1,20 +1,34 @@
 import React, { useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { messageService, Message } from "../../services/messageService";
 import { useAuth } from "../../contexts/AuthContext";
 import { Heart } from "lucide-react";
 import { useSocket } from "../../App";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useLikeMessage } from "@/hooks/useLikeMessage";
+import { formatTime, getInitials } from "@/utils/formatters";
 
 const MessageList: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { socket } = useSocket();
+
+  const likeManager = useLikeMessage({
+    socket,
+    userId: user?.id,
+    onError: (error) => {
+      console.error("Erreur lors de la gestion des likes:", error);
+    }
+  });
 
   const {
     data: messages,
     isLoading,
     error,
+    refetch
   } = useQuery<Message[]>({
     queryKey: ["messages"],
     queryFn: () => messageService.findAll(),
@@ -25,7 +39,7 @@ const MessageList: React.FC = () => {
 
     const handleLikeUpdate = (messageId: string) => {
       console.log("Message liked/unliked:", messageId);
-      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      refetch();
     };
 
     socket.on("messageUpdateLikes", handleLikeUpdate);
@@ -33,103 +47,134 @@ const MessageList: React.FC = () => {
     return () => {
       socket.off("messageUpdateLikes", handleLikeUpdate);
     };
-  }, [socket, queryClient]);
-
-  const likeMutation = useMutation({
-    mutationFn: (messageId: string) => messageService.likeMessage(messageId),
-    onSuccess: (_, messageId) => {
-      if (socket) {
-        socket.emit("messageLiked", { messageId });
-      }
-    },
-  });
-
-  const unlikeMutation = useMutation({
-    mutationFn: (messageId: string) => messageService.unlikeMessage(messageId),
-    onSuccess: (_, messageId) => {
-      if (socket) {
-        socket.emit("messageLiked", { messageId });
-      }
-    },
-  });
-
-  const handleLikeToggle = (message: Message) => {
-    if (!user) return;
-
-    const hasLiked = messageService.hasUserLiked(message, user.id);
-
-    if (hasLiked) {
-      unlikeMutation.mutate(message.id);
-    } else {
-      likeMutation.mutate(message.id);
-    }
-  };
+  }, [socket, refetch]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
   if (isLoading) {
-    return <div className="text-center">Loading messages...</div>;
+    return (
+      <div className="flex h-full items-center justify-center bg-[#191c26]">
+        <div className="text-center">
+          <div className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mx-auto"></div>
+          <p className="text-sm text-gray-400">Chargement des messages...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-600">
-        Error loading messages. Please try again.
+      <div className="flex h-full items-center justify-center bg-[#191c26]">
+        <div className="text-center text-red-400">
+          <p>Erreur lors du chargement des messages.</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 border-gray-700 text-gray-300 hover:bg-gray-800"
+            onClick={() => refetch()}
+          >
+            Réessayer
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {messages?.map((message) => {
-        const isLiked = user && messageService.hasUserLiked(message, user.id);
+    <ScrollArea className="h-full px-3">
+      <div className="space-y-3 pb-4 pt-2 w-full">
+        {messages?.map((message) => {
+          const isLiked = user && likeManager.hasUserLiked(message);
+          const isCurrentUser = user && user.id === message.user?.id;
+          const messageDate = new Date(message.createdAt);
 
-        return (
-          <div
-            key={message.id}
-            className="rounded-lg bg-white p-4 shadow-sm relative"
-          >
-            {/* Bouton like positionné à droite */}
-            <div className="absolute top-4 right-4">
-              <button
-                onClick={() => handleLikeToggle(message)}
-                disabled={!user}
-                className={`flex items-center gap-1 ${
-                  !user
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:text-red-500 transition-colors"
-                }`}
-              >
-                <Heart
-                  size={18}
-                  className={`transition-all ${
-                    isLiked ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-                <span className="text-sm font-medium">
-                  {message.likesCount || 0}
-                </span>
-              </button>
-            </div>
-
-            <div className="pr-12">
-              <p className="text-gray-800">{message.text}</p>
-              <div className="flex justify-between items-center text-sm text-gray-500/60 mt-4">
-                <p>{message?.user?.email}</p>
-                <p>{new Date(message.createdAt).toLocaleString()}</p>
+          return (
+            <div
+              key={message.id}
+              className={cn(
+                "flex w-full mb-1",
+                isCurrentUser ? "justify-end" : "justify-start"
+              )}
+            >
+              {!isCurrentUser && (
+                <Avatar className="h-8 w-8 shrink-0 mt-1 mr-2">
+                  <AvatarImage src={`https://avatar.vercel.sh/${message.user?.id}`} />
+                  <AvatarFallback className="bg-blue-700 text-white text-xs">
+                    {getInitials(message.user?.email || "User")}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              
+              <div className="max-w-[80%]">
+                <div className="flex flex-col">
+                  {!isCurrentUser && (
+                    <span className="text-[11px] text-gray-400 mb-1 ml-1">
+                      {message.user?.email?.split('@')[0]}
+                    </span>
+                  )}
+                  
+                  <div 
+                    className={cn(
+                      "px-3 py-2 mb-1 rounded-2xl text-sm break-words leading-relaxed cursor-pointer",
+                      isCurrentUser 
+                        ? "bg-blue-600 text-white rounded-br-none hover:bg-blue-700" 
+                        : "bg-gray-800 text-gray-100 rounded-bl-none hover:bg-gray-700"
+                    )}
+                    onDoubleClick={() => user && likeManager.toggleLike(message)}
+                    title="Double-cliquez pour aimer ce message"
+                  >
+                    {message.text}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-gray-500">
+                      {formatTime(messageDate)}
+                    </span>
+                    
+                    <button
+                      onClick={() => likeManager.toggleLike(message)}
+                      disabled={!user || likeManager.isLoading}
+                      className="flex items-center hover:opacity-100 transition-opacity group"
+                      title={isLiked ? "Je n'aime plus" : "J'aime"}
+                    >
+                      <Heart
+                        size={13}
+                        className={cn(
+                          "mr-0.5 transition-all duration-200 group-hover:scale-110",
+                          isLiked ? "fill-red-500 text-red-500" : "text-gray-500 group-hover:text-red-400"
+                        )}
+                      />
+                      {!!message.likesCount && (
+                        <span className={cn(
+                          "text-[10px] transition-colors",
+                          isLiked ? "text-red-400" : "text-gray-500"
+                        )}>
+                          {message.likesCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
+              
+              {isCurrentUser && (
+                <Avatar className="h-8 w-8 shrink-0 mt-1 ml-2">
+                  <AvatarImage src={`https://avatar.vercel.sh/${message.user?.id}`} />
+                  <AvatarFallback className="bg-indigo-600 text-white text-xs">
+                    {getInitials(message.user?.email || "User")}
+                  </AvatarFallback>
+                </Avatar>
+              )}
             </div>
-          </div>
-        );
-      })}
-      <div ref={messagesEndRef} />
-    </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+    </ScrollArea>
   );
 };
 

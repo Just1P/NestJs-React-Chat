@@ -3,6 +3,9 @@ import { Socket } from "socket.io-client";
 import { UserRound, Clock } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type UserStatus = "online" | "offline";
 
@@ -29,6 +32,16 @@ const getTimeAgo = (dateString: string): string => {
     console.error("Erreur lors du formatage de la date:", error);
     return "Date inconnue";
   }
+};
+
+const getInitials = (email: string) => {
+  return email
+    .split("@")[0]
+    .split(".")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
 };
 
 const OnlineUsers: React.FC<OnlineUsersProps> = ({ socket }) => {
@@ -69,80 +82,86 @@ const OnlineUsers: React.FC<OnlineUsersProps> = ({ socket }) => {
   const offlineUsers = users.filter((user) => user.status === "offline");
 
   return (
-    <div className="h-full">
+    <div className="h-full p-1">
       <div className="flex items-center mb-2">
-        <UserRound className="mr-2" size={18} />
-        <h3 className="text-sm font-semibold">Utilisateurs ({users.length})</h3>
+        <UserRound className="mr-2 text-primary" size={18} />
+        <h3 className="text-sm font-semibold">Utilisateurs connectés ({users.length})</h3>
       </div>
 
       {users.length === 0 ? (
-        <p className="text-gray-500 text-xs">Aucun utilisateur enregistré</p>
+        <div className="flex items-center justify-center h-14 border rounded-md bg-muted/20">
+          <p className="text-sm text-muted-foreground">Aucun utilisateur enregistré</p>
+        </div>
       ) : (
-        <div className="space-y-3">
-          <div>
-            <div className="text-xs font-semibold text-green-600 mb-1">
-              En ligne ({onlineUsers.length})
-            </div>
+        <ScrollArea className="h-[120px]">
+          <div className="space-y-3">
+            {onlineUsers.length > 0 && (
+              <div>
+                <div className="flex items-center text-xs font-medium text-green-600 mb-2">
+                  <span className="flex h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
+                  En ligne ({onlineUsers.length})
+                </div>
 
-            {onlineUsers.length > 0 ? (
-              <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
-                {onlineUsers.map((user) => (
-                  <div
-                    key={user.userId}
-                    className="flex items-center bg-white border border-green-100 rounded-lg px-3 py-1.5 shadow-sm"
-                  >
-                    <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-xs font-medium text-gray-800 truncate max-w-36">
-                      {user.email}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-xs ml-1">
-                Aucun utilisateur en ligne
-              </p>
-            )}
-          </div>
-
-          <div>
-            <div className="text-xs font-semibold text-gray-500 mb-1">
-              Hors ligne ({offlineUsers.length})
-            </div>
-
-            {offlineUsers.length > 0 ? (
-              <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
-                {offlineUsers.map((user) => {
-                  const timeAgo = getTimeAgo(user.lastSeen);
-
-                  return (
+                <div className="grid grid-cols-2 gap-2 pb-2">
+                  {onlineUsers.map((user) => (
                     <div
                       key={user.userId}
-                      className="flex items-center bg-white border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm opacity-75"
+                      className="flex items-center gap-2 p-1.5 border rounded-lg bg-card shadow-sm"
                     >
-                      <div className="h-2.5 w-2.5 rounded-full bg-gray-300 mr-2"></div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-600 truncate max-w-36">
-                          {user.email}
-                        </span>
-                        <div className="flex items-center">
-                          <Clock size={10} className="text-gray-400 mr-1" />
-                          <span className="text-[10px] text-gray-500">
-                            {timeAgo}
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={`https://avatar.vercel.sh/${user.userId}`} />
+                        <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium truncate max-w-24">
+                        {user.email}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {offlineUsers.length > 0 && (
+              <div>
+                {onlineUsers.length > 0 && <Separator className="my-2" />}
+                
+                <div className="flex items-center text-xs font-medium text-muted-foreground mb-2">
+                  <span className="flex h-2 w-2 rounded-full bg-muted mr-1.5"></span>
+                  Hors ligne ({offlineUsers.length})
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pb-2">
+                  {offlineUsers.map((user) => {
+                    const timeAgo = getTimeAgo(user.lastSeen);
+
+                    return (
+                      <div
+                        key={user.userId}
+                        className="flex items-center gap-2 p-1.5 border rounded-lg bg-card/80 shadow-sm opacity-75"
+                      >
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={`https://avatar.vercel.sh/${user.userId}`} />
+                          <AvatarFallback className="bg-muted text-[10px]">{getInitials(user.email)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="text-xs font-medium truncate max-w-24">
+                            {user.email}
                           </span>
+                          <div className="flex items-center">
+                            <Clock size={10} className="text-muted-foreground mr-1" />
+                            <span className="text-[10px] text-muted-foreground truncate">
+                              {timeAgo}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-xs ml-1">
-                Aucun utilisateur hors ligne
-              </p>
             )}
           </div>
-        </div>
+        </ScrollArea>
       )}
     </div>
   );

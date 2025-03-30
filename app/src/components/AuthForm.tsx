@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { AuthFormData } from "../services/authService";
@@ -11,6 +11,8 @@ interface AuthFormProps {
   redirectText: string;
   redirectLinkText: string;
   redirectTo: string;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({
@@ -20,9 +22,20 @@ const AuthForm: React.FC<AuthFormProps> = ({
   redirectText,
   redirectLinkText,
   redirectTo,
+  isLoading: externalIsLoading,
+  error: externalError,
 }) => {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [internalError, setInternalError] = useState<string | null>(null);
+  const [internalIsLoading, setInternalIsLoading] = useState(false);
+
+  const isLoading = externalIsLoading !== undefined ? externalIsLoading : internalIsLoading;
+  const error = externalError !== undefined ? externalError : internalError;
+
+  useEffect(() => {
+    if (externalError) {
+      setInternalError(null);
+    }
+  }, [externalError]);
 
   const {
     register,
@@ -31,19 +44,35 @@ const AuthForm: React.FC<AuthFormProps> = ({
   } = useForm<AuthFormData>();
 
   const handleFormSubmit = async (data: AuthFormData) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await onSubmit(data);
-    } catch (err) {
-      console.error("Authentication error:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Une erreur est survenue lors de l'authentification"
-      );
-    } finally {
-      setIsLoading(false);
+    if (externalIsLoading !== undefined) {
+      try {
+        setInternalError(null);
+        await onSubmit(data);
+      } catch (err) {
+        if (externalError === undefined) {
+          console.error("Erreur d'authentification:", err);
+          setInternalError(
+            err instanceof Error
+              ? err.message
+              : "Une erreur est survenue lors de l'authentification"
+          );
+        }
+      }
+    } else {
+      try {
+        setInternalIsLoading(true);
+        setInternalError(null);
+        await onSubmit(data);
+      } catch (err) {
+        console.error("Erreur d'authentification:", err);
+        setInternalError(
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de l'authentification"
+        );
+      } finally {
+        setInternalIsLoading(false);
+      }
     }
   };
 
@@ -76,6 +105,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
                   },
                 })}
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2"
+                disabled={isLoading}
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">
@@ -110,6 +140,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
                   },
                 })}
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2"
+                disabled={isLoading}
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">
