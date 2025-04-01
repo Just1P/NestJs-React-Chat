@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLikeMessage } from "@/hooks/useLikeMessage";
-import { formatTime, getInitials } from "@/utils/formatters";
+import { getInitials, formatMessageTime } from "@/utils/formatters";
 
 const MessageList: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -90,7 +90,8 @@ const MessageList: React.FC = () => {
         {messages?.map((message) => {
           const isLiked = user && likeManager.hasUserLiked(message);
           const isCurrentUser = user && user.id === message.user?.id;
-          const messageDate = new Date(message.createdAt);
+
+          const messageTime = formatMessageTime(message.createdAt);
 
           return (
             <div
@@ -136,7 +137,7 @@ const MessageList: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-gray-500">
-                      {formatTime(messageDate)}
+                      {messageTime}
                     </span>
 
                     <button
