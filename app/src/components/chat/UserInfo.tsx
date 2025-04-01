@@ -13,7 +13,7 @@ const UserInfo: React.FC = () => {
       <Button
         onClick={() => navigate("/signin")}
         variant="outline"
-        className="gap-2 w-full"
+        className="gap-2 w-full text-foreground cursor-pointer"
       >
         <LogIn className="h-4 w-4" />
         <span>Se connecter</span>
