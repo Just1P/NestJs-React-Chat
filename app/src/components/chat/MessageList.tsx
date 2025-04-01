@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { messageService, Message } from "../../services/messageService";
 import { useAuth } from "../../contexts/AuthContext";
@@ -21,14 +21,14 @@ const MessageList: React.FC = () => {
     userId: user?.id,
     onError: (error) => {
       console.error("Erreur lors de la gestion des likes:", error);
-    }
+    },
   });
 
   const {
     data: messages,
     isLoading,
     error,
-    refetch
+    refetch,
   } = useQuery<Message[]>({
     queryKey: ["messages"],
     queryFn: () => messageService.findAll(),
@@ -102,39 +102,43 @@ const MessageList: React.FC = () => {
             >
               {!isCurrentUser && (
                 <Avatar className="h-8 w-8 shrink-0 mt-1 mr-2">
-                  <AvatarImage src={`https://avatar.vercel.sh/${message.user?.id}`} />
+                  <AvatarImage
+                    src={`https://avatar.vercel.sh/${message.user?.id}`}
+                  />
                   <AvatarFallback className="bg-blue-700 text-white text-xs">
                     {getInitials(message.user?.email || "User")}
                   </AvatarFallback>
                 </Avatar>
               )}
-              
+
               <div className="max-w-[80%]">
                 <div className="flex flex-col">
                   {!isCurrentUser && (
                     <span className="text-[11px] text-gray-400 mb-1 ml-1">
-                      {message.user?.email?.split('@')[0]}
+                      {message.user?.email?.split("@")[0]}
                     </span>
                   )}
-                  
-                  <div 
+
+                  <div
                     className={cn(
                       "px-3 py-2 mb-1 rounded-2xl text-sm break-words leading-relaxed cursor-pointer",
-                      isCurrentUser 
-                        ? "bg-blue-600 text-white rounded-br-none hover:bg-blue-700" 
+                      isCurrentUser
+                        ? "bg-blue-600 text-white rounded-br-none hover:bg-blue-700"
                         : "bg-gray-800 text-gray-100 rounded-bl-none hover:bg-gray-700"
                     )}
-                    onDoubleClick={() => user && likeManager.toggleLike(message)}
+                    onDoubleClick={() =>
+                      user && likeManager.toggleLike(message)
+                    }
                     title="Double-cliquez pour aimer ce message"
                   >
                     {message.text}
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-gray-500">
                       {formatTime(messageDate)}
                     </span>
-                    
+
                     <button
                       onClick={() => likeManager.toggleLike(message)}
                       disabled={!user || likeManager.isLoading}
@@ -145,14 +149,18 @@ const MessageList: React.FC = () => {
                         size={13}
                         className={cn(
                           "mr-0.5 transition-all duration-200 group-hover:scale-110",
-                          isLiked ? "fill-red-500 text-red-500" : "text-gray-500 group-hover:text-red-400"
+                          isLiked
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-500 group-hover:text-red-400"
                         )}
                       />
                       {!!message.likesCount && (
-                        <span className={cn(
-                          "text-[10px] transition-colors",
-                          isLiked ? "text-red-400" : "text-gray-500"
-                        )}>
+                        <span
+                          className={cn(
+                            "text-[10px] transition-colors",
+                            isLiked ? "text-red-400" : "text-gray-500"
+                          )}
+                        >
                           {message.likesCount}
                         </span>
                       )}
@@ -160,10 +168,12 @@ const MessageList: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {isCurrentUser && (
                 <Avatar className="h-8 w-8 shrink-0 mt-1 ml-2">
-                  <AvatarImage src={`https://avatar.vercel.sh/${message.user?.id}`} />
+                  <AvatarImage
+                    src={`https://avatar.vercel.sh/${message.user?.id}`}
+                  />
                   <AvatarFallback className="bg-indigo-600 text-white text-xs">
                     {getInitials(message.user?.email || "User")}
                   </AvatarFallback>

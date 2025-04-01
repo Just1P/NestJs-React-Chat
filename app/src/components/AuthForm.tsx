@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { AuthFormData } from "../services/authService";
@@ -28,7 +28,8 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const [internalError, setInternalError] = useState<string | null>(null);
   const [internalIsLoading, setInternalIsLoading] = useState(false);
 
-  const isLoading = externalIsLoading !== undefined ? externalIsLoading : internalIsLoading;
+  const isLoading =
+    externalIsLoading !== undefined ? externalIsLoading : internalIsLoading;
   const error = externalError !== undefined ? externalError : internalError;
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import AuthForm from "../components/AuthForm";
@@ -12,12 +12,13 @@ export default function SignIn() {
   const handleSubmit = async (data: AuthFormData) => {
     setFormError(null);
     clearError();
-    
+
     try {
       await signIn(data);
       navigate("/");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erreur lors de la connexion";
+      const errorMessage =
+        err instanceof Error ? err.message : "Erreur lors de la connexion";
       setFormError(errorMessage);
       console.error("Erreur de connexion:", err);
     }

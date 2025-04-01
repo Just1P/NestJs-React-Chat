@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 import { UserRound, Clock } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -85,12 +85,16 @@ const OnlineUsers: React.FC<OnlineUsersProps> = ({ socket }) => {
     <div className="h-full p-1">
       <div className="flex items-center mb-2">
         <UserRound className="mr-2 text-primary" size={18} />
-        <h3 className="text-sm font-semibold">Utilisateurs connectés ({users.length})</h3>
+        <h3 className="text-sm font-semibold">
+          Utilisateurs connectés ({users.length})
+        </h3>
       </div>
 
       {users.length === 0 ? (
         <div className="flex items-center justify-center h-14 border rounded-md bg-muted/20">
-          <p className="text-sm text-muted-foreground">Aucun utilisateur enregistré</p>
+          <p className="text-sm text-muted-foreground">
+            Aucun utilisateur enregistré
+          </p>
         </div>
       ) : (
         <ScrollArea className="h-[120px]">
@@ -109,8 +113,12 @@ const OnlineUsers: React.FC<OnlineUsersProps> = ({ socket }) => {
                       className="flex items-center gap-2 p-1.5 border rounded-lg bg-card shadow-sm"
                     >
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={`https://avatar.vercel.sh/${user.userId}`} />
-                        <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                        <AvatarImage
+                          src={`https://avatar.vercel.sh/${user.userId}`}
+                        />
+                        <AvatarFallback>
+                          {getInitials(user.email)}
+                        </AvatarFallback>
                       </Avatar>
                       <span className="text-xs font-medium truncate max-w-24">
                         {user.email}
@@ -124,7 +132,7 @@ const OnlineUsers: React.FC<OnlineUsersProps> = ({ socket }) => {
             {offlineUsers.length > 0 && (
               <div>
                 {onlineUsers.length > 0 && <Separator className="my-2" />}
-                
+
                 <div className="flex items-center text-xs font-medium text-muted-foreground mb-2">
                   <span className="flex h-2 w-2 rounded-full bg-muted mr-1.5"></span>
                   Hors ligne ({offlineUsers.length})
@@ -140,15 +148,22 @@ const OnlineUsers: React.FC<OnlineUsersProps> = ({ socket }) => {
                         className="flex items-center gap-2 p-1.5 border rounded-lg bg-card/80 shadow-sm opacity-75"
                       >
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={`https://avatar.vercel.sh/${user.userId}`} />
-                          <AvatarFallback className="bg-muted text-[10px]">{getInitials(user.email)}</AvatarFallback>
+                          <AvatarImage
+                            src={`https://avatar.vercel.sh/${user.userId}`}
+                          />
+                          <AvatarFallback className="bg-muted text-[10px]">
+                            {getInitials(user.email)}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col overflow-hidden">
                           <span className="text-xs font-medium truncate max-w-24">
                             {user.email}
                           </span>
                           <div className="flex items-center">
-                            <Clock size={10} className="text-muted-foreground mr-1" />
+                            <Clock
+                              size={10}
+                              className="text-muted-foreground mr-1"
+                            />
                             <span className="text-[10px] text-muted-foreground truncate">
                               {timeAgo}
                             </span>

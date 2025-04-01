@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -25,24 +25,24 @@ const MessageForm: React.FC<MessageFormProps> = ({ socket }) => {
     mutationFn: (data: CreateMessageDto) => messageService.create(data),
     onSuccess: () => {
       setErrorMessage(null);
-      
+
       queryClient.invalidateQueries({ queryKey: ["messages"] });
-      
+
       if (socket) {
         socket.emit("message", "new message created");
       }
-      
+
       reset();
     },
     onError: (error: Error) => {
       console.error("Erreur lors de l'envoi du message:", error);
       setErrorMessage("Erreur lors de l'envoi. Veuillez réessayer.");
-    }
+    },
   });
 
   const onSubmit = (data: CreateMessageDto) => {
     if (!allowToSend) return;
-    
+
     try {
       mutation.mutate(data);
     } catch (error) {
@@ -69,7 +69,9 @@ const MessageForm: React.FC<MessageFormProps> = ({ socket }) => {
           disabled={mutation.isPending || !allowToSend}
           className={cn(
             "absolute right-1.5 h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center transition-all duration-200 text-white",
-            allowToSend ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
+            allowToSend
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-1",
             mutation.isPending && "opacity-70"
           )}
         >
@@ -81,9 +83,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ socket }) => {
         </button>
       </div>
       {errorMessage && (
-        <p className="mt-2 text-xs text-red-400 pl-2">
-          {errorMessage}
-        </p>
+        <p className="mt-2 text-xs text-red-400 pl-2">{errorMessage}</p>
       )}
     </form>
   );
