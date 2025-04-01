@@ -1,10 +1,9 @@
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { formatDistanceToNow, parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
-
 
 export const getInitials = (email: string): string => {
   if (!email) return "??";
-  
+
   return email
     .split("@")[0]
     .split(".")
@@ -13,7 +12,6 @@ export const getInitials = (email: string): string => {
     .toUpperCase()
     .substring(0, 2);
 };
-
 
 export const getTimeAgo = (dateString: string): string => {
   try {
@@ -30,5 +28,33 @@ export const getTimeAgo = (dateString: string): string => {
 };
 
 export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}; 
+  const validDate =
+    date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
+
+  return format(validDate, "HH:mm", { locale: fr });
+};
+
+export const formatMessageTime = (dateInput: string | Date): string => {
+  try {
+    let date: Date;
+    if (typeof dateInput === "string") {
+      date = parseISO(dateInput);
+    } else if (dateInput instanceof Date && !isNaN(dateInput.getTime())) {
+      date = new Date(dateInput);
+    } else {
+      return "--";
+    }
+
+    const correctedDate = new Date(date);
+    correctedDate.setHours(date.getHours() + 2);
+
+    return formatDistanceToNow(correctedDate, {
+      addSuffix: true,
+      locale: fr,
+      includeSeconds: true,
+    });
+  } catch (error) {
+    console.error("Erreur lors du formatage de l'heure du message:", error);
+    return "--";
+  }
+};
