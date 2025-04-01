@@ -34,6 +34,8 @@ const MessageList: React.FC = () => {
     queryFn: () => messageService.findAll(),
   });
 
+  const previousMessagesCountRef = useRef<number>(0);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -52,9 +54,20 @@ const MessageList: React.FC = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
   useEffect(() => {
-    scrollToBottom();
+    if (!messages) return;
+
+    if (
+      previousMessagesCountRef.current === 0 ||
+      messages.length > previousMessagesCountRef.current
+    ) {
+      scrollToBottom();
+    }
+
+    previousMessagesCountRef.current = messages.length;
   }, [messages]);
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-[#191c26]">
@@ -112,8 +125,18 @@ const MessageList: React.FC = () => {
                 </Avatar>
               )}
 
-              <div className="max-w-[80%]">
-                <div className="flex flex-col">
+              <div
+                className={cn(
+                  "max-w-[80%]",
+                  isCurrentUser ? "items-end" : "items-start"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex flex-col",
+                    isCurrentUser ? "items-end" : "items-start"
+                  )}
+                >
                   {!isCurrentUser && (
                     <span className="text-[11px] text-gray-400 mb-1 ml-1">
                       {message.user?.email?.split("@")[0]}
@@ -122,7 +145,7 @@ const MessageList: React.FC = () => {
 
                   <div
                     className={cn(
-                      "px-3 py-2 mb-1 rounded-2xl text-sm break-words leading-relaxed cursor-pointer",
+                      "px-3 py-2 mb-1 rounded-2xl text-sm break-words leading-relaxed cursor-pointer min-w-[80px]",
                       isCurrentUser
                         ? "bg-blue-600 text-white rounded-br-none hover:bg-blue-700"
                         : "bg-gray-800 text-gray-100 rounded-bl-none hover:bg-gray-700"
@@ -135,37 +158,77 @@ const MessageList: React.FC = () => {
                     {message.text}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-gray-500">
-                      {messageTime}
-                    </span>
-
-                    <button
-                      onClick={() => likeManager.toggleLike(message)}
-                      disabled={!user || likeManager.isLoading}
-                      className="flex items-center hover:opacity-100 transition-opacity group"
-                      title={isLiked ? "Je n'aime plus" : "J'aime"}
-                    >
-                      <Heart
-                        size={13}
-                        className={cn(
-                          "mr-0.5 transition-all duration-200 group-hover:scale-110",
-                          isLiked
-                            ? "fill-red-500 text-red-500"
-                            : "text-gray-500 group-hover:text-red-400"
-                        )}
-                      />
-                      {!!message.likesCount && (
-                        <span
-                          className={cn(
-                            "text-[10px] transition-colors",
-                            isLiked ? "text-red-400" : "text-gray-500"
-                          )}
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 w-full",
+                      isCurrentUser ? "justify-end" : "justify-start"
+                    )}
+                  >
+                    {isCurrentUser ? (
+                      <>
+                        <button
+                          onClick={() => likeManager.toggleLike(message)}
+                          disabled={!user || likeManager.isLoading}
+                          className="flex items-center hover:opacity-100 transition-opacity group"
+                          title={isLiked ? "Je n'aime plus" : "J'aime"}
                         >
-                          {message.likesCount}
+                          <Heart
+                            size={13}
+                            className={cn(
+                              "mr-0.5 transition-all duration-200 group-hover:scale-110",
+                              isLiked
+                                ? "fill-red-500 text-red-500"
+                                : "text-gray-500 group-hover:text-red-400"
+                            )}
+                          />
+                          {!!message.likesCount && (
+                            <span
+                              className={cn(
+                                "text-[10px] transition-colors",
+                                isLiked ? "text-red-400" : "text-gray-500"
+                              )}
+                            >
+                              {message.likesCount}
+                            </span>
+                          )}
+                        </button>
+                        <span className="text-[11px] text-gray-500">
+                          {messageTime}
                         </span>
-                      )}
-                    </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[11px] text-gray-500">
+                          {messageTime}
+                        </span>
+                        <button
+                          onClick={() => likeManager.toggleLike(message)}
+                          disabled={!user || likeManager.isLoading}
+                          className="flex items-center hover:opacity-100 transition-opacity group"
+                          title={isLiked ? "Je n'aime plus" : "J'aime"}
+                        >
+                          <Heart
+                            size={13}
+                            className={cn(
+                              "mr-0.5 transition-all duration-200 group-hover:scale-110",
+                              isLiked
+                                ? "fill-red-500 text-red-500"
+                                : "text-gray-500 group-hover:text-red-400"
+                            )}
+                          />
+                          {!!message.likesCount && (
+                            <span
+                              className={cn(
+                                "text-[10px] transition-colors",
+                                isLiked ? "text-red-400" : "text-gray-500"
+                              )}
+                            >
+                              {message.likesCount}
+                            </span>
+                          )}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
